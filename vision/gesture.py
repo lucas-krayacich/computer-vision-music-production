@@ -113,7 +113,7 @@ class GestureClassifier:
                 # Drum strip — left hand can also select drums
                 s.in_drum_strip    = True
                 s.drum_strip_xfrac = float(np.clip(fx, 0.0, 1.0))
-                seg = max(0, min(4, int(fx * 5)))
+                seg = max(0, min(5, int(fx * 6)))
                 self._drum_dwell(seg, s, now)
 
             else:
@@ -148,7 +148,7 @@ class GestureClassifier:
             if fpy < strip_y:
                 s.in_drum_strip    = True
                 s.drum_strip_xfrac = float(np.clip(fx, 0.0, 1.0))
-                seg = max(0, min(4, int(fx * 5)))
+                seg = max(0, min(5, int(fx * 6)))
                 self._drum_dwell(seg, s, now)
 
             else:

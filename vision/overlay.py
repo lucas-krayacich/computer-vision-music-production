@@ -82,14 +82,15 @@ def _draw_drum_strip(canvas, state: AppState, w, strip_h):
     zone_w = w // n
     overlay = canvas.copy()
 
+    off_idx = len(DRUM_PATTERN_NAMES) - 1   # last slot is "Off"
     for i, name in enumerate(DRUM_PATTERN_NAMES):
         x0, x1 = i * zone_w, (i + 1) * zone_w
         if i == state.drum_pattern:
-            col = COLOR_DRUM_ACTIVE
-        elif state.in_drum_strip and int(state.drum_strip_xfrac * 5) == i:
+            col = (60, 60, 160) if i == off_idx else COLOR_DRUM_ACTIVE
+        elif state.in_drum_strip and int(state.drum_strip_xfrac * 6) == i:
             col = (70, 65, 100)
         else:
-            col = COLOR_STRIP_BG
+            col = (28, 22, 40) if i == off_idx else COLOR_STRIP_BG
         cv2.rectangle(overlay, (x0, 0), (x1, strip_h), col, -1)
 
     cv2.addWeighted(overlay, 0.6, canvas, 0.4, 0, canvas)
@@ -113,14 +114,16 @@ def _draw_drum_strip(canvas, state: AppState, w, strip_h):
 class Overlay:
     def draw(
         self,
-        frame:       np.ndarray,
-        state:       AppState,
-        hands:       list,             # list[HandData] for skeleton
-        scale_labels: list[str],       # note names for left wheel segments
-        chord_name:  str,
-        key:         str,
-        scale_name:  str,
-        bpm:         int,
+        frame:        np.ndarray,
+        state:        AppState,
+        hands:        list,
+        scale_labels: list[str],
+        chord_name:   str,
+        key:          str,
+        scale_name:   str,
+        bpm:          int,
+        lpf_enabled:  bool = False,
+        lpf_hz:       int  = 800,
     ) -> np.ndarray:
 
         canvas = frame.copy()
@@ -172,7 +175,8 @@ class Overlay:
                 cv2.circle(canvas, tip,  5, (220, 80, 255),  -1, cv2.LINE_AA)
 
         # 6 — Status bar
-        _draw_statusbar(canvas, w, h, chord_name, key, scale_name, bpm)
+        _draw_statusbar(canvas, w, h, chord_name, key, scale_name, bpm,
+                        lpf_enabled, lpf_hz)
 
         return canvas
 
@@ -194,12 +198,15 @@ def _draw_skeleton(canvas, landmarks, w, h):
         cv2.circle(canvas, pt, 3, (200, 255, 180), -1, cv2.LINE_AA)
 
 
-def _draw_statusbar(canvas, w, h, chord_name, key, scale_name, bpm):
+def _draw_statusbar(canvas, w, h, chord_name, key, scale_name, bpm,
+                    lpf_enabled=False, lpf_hz=800):
     bar_y = h - 42
     cv2.rectangle(canvas, (0, bar_y - 6), (w, h), (22, 20, 32), -1)
-    line1 = f"Chord: {chord_name}    Key: {key}    Scale: {scale_name}    BPM: {bpm}"
-    line2 = "S: cycle scale    K: cycle key    Q: quit"
+    lpf_str = f"LPF: {lpf_hz}Hz" if lpf_enabled else "LPF: off"
+    line1 = (f"Chord: {chord_name}    Key: {key}    Scale: {scale_name}"
+             f"    BPM: {bpm}    {lpf_str}")
+    line2 = "S: scale    K: key    F: LPF on/off    [/]: LPF cutoff    Q: quit"
     cv2.putText(canvas, line1, (10, bar_y + 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.46, COLOR_TEXT,       1, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.46, COLOR_TEXT,      1, cv2.LINE_AA)
     cv2.putText(canvas, line2, (10, bar_y + 28),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.36, (130, 125, 155),  1, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.36, (130, 125, 155), 1, cv2.LINE_AA)

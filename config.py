@@ -51,9 +51,14 @@ DEAD_ZONE_RATIO    = 0.32    # fraction of wheel radius → centre dead zone
 
 # ── Drum strip ────────────────────────────────────────────────────────────────
 DRUM_STRIP_Y_RATIO  = 0.17   # hand y < this → drum selection zone
-DRUM_PATTERN_NAMES  = ["Basic", "Driving", "Minimal", "Syncopated", "Breakdown"]
+DRUM_PATTERN_NAMES  = ["Basic", "Driving", "Minimal", "Syncopated", "Breakdown", "Off"]
 DRUM_DWELL_MS       = 450    # ms hand must hold zone before confirming
 CHORD_DWELL_MS      = 280    # ms hand must hold wheel segment before confirming
+
+# ── Low-pass filter ───────────────────────────────────────────────────────────
+LPF_ENABLED_DEFAULT = False
+LPF_CUTOFFS_HZ      = [300, 500, 800, 1200, 2000, 4000, 8000]   # [ / ] to step
+LPF_DEFAULT_IDX     = 2   # 800 Hz
 
 # ── UI colours (BGR) ──────────────────────────────────────────────────────────
 COLOR_ACTIVE      = (210,  90, 255)

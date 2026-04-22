@@ -30,6 +30,7 @@ from vision.overlay      import Overlay
 from music.theory        import note_name, get_chord_freqs
 from music.pad_synth     import PadSynth
 from music.drum_machine  import DrumMachine
+from music.lpf           import LowPassFilter
 import sounddevice as sd
 
 
@@ -53,11 +54,13 @@ def main():
     # ── Audio (after MediaPipe is fully initialised) ───────────────────────────
     pad   = PadSynth(SAMPLE_RATE)
     drums = DrumMachine(SAMPLE_RATE, BPM)
+    lpf   = LowPassFilter(SAMPLE_RATE)
 
     def audio_callback(outdata, frames, time_info, status):
         if status:
             print(f"[audio] {status}", file=sys.stderr)
         mix = pad.generate(frames) + drums.generate(frames)
+        mix = lpf.process(mix)
         mix = np.clip(mix * 0.85, -1.0, 1.0)
         outdata[:, 0] = mix
         outdata[:, 1] = mix
@@ -109,6 +112,7 @@ def main():
             display = overlay.draw(
                 frame, state, hands,
                 scale_labels, chord_name, key, scale, BPM,
+                lpf_enabled=lpf.enabled, lpf_hz=lpf.cutoff_hz,
             )
             cv2.imshow("CV Music", display)
 
@@ -122,6 +126,12 @@ def main():
             elif k == ord("k"):
                 key_idx = (key_idx + 1) % len(KEYS)
                 prev_chord_sig = None
+            elif k == ord("f"):
+                lpf.enabled = not lpf.enabled
+            elif k == ord("]"):
+                lpf.step_cutoff(+1)
+            elif k == ord("["):
+                lpf.step_cutoff(-1)
 
     cap.release()
     cv2.destroyAllWindows()
